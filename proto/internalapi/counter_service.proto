@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package counter.internalapi;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/syth0le/counter-service/proto/internalapi";
+
+service CounterService {
+  rpc NotifyMessage(NotifyMessageRequest) returns (google.protobuf.Empty) {}
+}
+
+message NotifyMessageRequest {
+  string reader_id = 1;
+  string sender_id = 2;
+  bool is_read = 3;
+}
