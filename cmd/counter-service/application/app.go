@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/syth0le/counter-service/cmd/counter-service/configuration"
+	"github.com/syth0le/counter-service/internal/service/notifier"
 )
 
 type App struct {
@@ -47,7 +48,9 @@ func (a *App) Run() error {
 	return nil
 }
 
-type env struct{}
+type env struct {
+	notifier notifier.Service
+}
 
 func (a *App) constructEnv(ctx context.Context) (*env, error) {
 	//db, err := postgres.NewStorage(a.Logger, a.Config.Storage)
@@ -56,5 +59,7 @@ func (a *App) constructEnv(ctx context.Context) (*env, error) {
 	//}
 	//a.Closer.Add(db.Close)
 
-	return &env{}, nil
+	return &env{
+		notifier: notifier.NewService(a.Logger),
+	}, nil
 }
