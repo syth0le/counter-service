@@ -7,11 +7,33 @@ import "google/protobuf/empty.proto";
 option go_package = "github.com/syth0le/counter-service/proto/internalapi";
 
 service CounterService {
-  rpc NotifyMessage(NotifyMessageRequest) returns (google.protobuf.Empty) {}
+  rpc CreateDialogCounters(CreateDialogCountersRequest) returns (google.protobuf.Empty) {}
+  rpc IncreaseDialogCounters(IncreaseDialogCountersRequest) returns (google.protobuf.Empty) {}
+  rpc FlushDialogCountersForUser(FlushDialogCountersForUserRequest) returns (google.protobuf.Empty) {}
+  rpc GetDialogCounterForUser(GetDialogCounterForUserRequest) returns (GetDialogCounterForUserResponse) {}
 }
 
-message NotifyMessageRequest {
-  string reader_id = 1;
+message CreateDialogCountersRequest {
+  string dialog_id = 1;
+  repeated string participants = 2;
+}
+
+message IncreaseDialogCountersRequest {
+  string dialog_id = 1;
   string sender_id = 2;
-  bool is_read = 3;
+  repeated string followers_id = 3;
+}
+
+message FlushDialogCountersForUserRequest {
+  string dialog_id = 1;
+  string user_id = 2;
+}
+
+message GetDialogCounterForUserRequest {
+  string dialog_id = 1;
+  string user_id = 2;
+}
+
+message GetDialogCounterForUserResponse {
+  int64 counter = 1;
 }

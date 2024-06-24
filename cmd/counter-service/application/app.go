@@ -37,7 +37,6 @@ func (a *App) Run() error {
 	if err != nil {
 		return fmt.Errorf("construct env: %w", err)
 	}
-	_ = envStruct
 
 	internalGrpcServer := a.newInternalGRPCServer(envStruct)
 	a.Closer.AddForce(internalGrpcServer.ForcefullyStop)

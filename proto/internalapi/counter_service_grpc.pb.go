@@ -20,14 +20,20 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	CounterService_NotifyMessage_FullMethodName = "/counter.internalapi.CounterService/NotifyMessage"
+	CounterService_CreateDialogCounters_FullMethodName       = "/counter.internalapi.CounterService/CreateDialogCounters"
+	CounterService_IncreaseDialogCounters_FullMethodName     = "/counter.internalapi.CounterService/IncreaseDialogCounters"
+	CounterService_FlushDialogCountersForUser_FullMethodName = "/counter.internalapi.CounterService/FlushDialogCountersForUser"
+	CounterService_GetDialogCounterForUser_FullMethodName    = "/counter.internalapi.CounterService/GetDialogCounterForUser"
 )
 
 // CounterServiceClient is the client API for CounterService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CounterServiceClient interface {
-	NotifyMessage(ctx context.Context, in *NotifyMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateDialogCounters(ctx context.Context, in *CreateDialogCountersRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	IncreaseDialogCounters(ctx context.Context, in *IncreaseDialogCountersRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	FlushDialogCountersForUser(ctx context.Context, in *FlushDialogCountersForUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetDialogCounterForUser(ctx context.Context, in *GetDialogCounterForUserRequest, opts ...grpc.CallOption) (*GetDialogCounterForUserResponse, error)
 }
 
 type counterServiceClient struct {
@@ -38,9 +44,36 @@ func NewCounterServiceClient(cc grpc.ClientConnInterface) CounterServiceClient {
 	return &counterServiceClient{cc}
 }
 
-func (c *counterServiceClient) NotifyMessage(ctx context.Context, in *NotifyMessageRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *counterServiceClient) CreateDialogCounters(ctx context.Context, in *CreateDialogCountersRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, CounterService_NotifyMessage_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, CounterService_CreateDialogCounters_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *counterServiceClient) IncreaseDialogCounters(ctx context.Context, in *IncreaseDialogCountersRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, CounterService_IncreaseDialogCounters_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *counterServiceClient) FlushDialogCountersForUser(ctx context.Context, in *FlushDialogCountersForUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, CounterService_FlushDialogCountersForUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *counterServiceClient) GetDialogCounterForUser(ctx context.Context, in *GetDialogCounterForUserRequest, opts ...grpc.CallOption) (*GetDialogCounterForUserResponse, error) {
+	out := new(GetDialogCounterForUserResponse)
+	err := c.cc.Invoke(ctx, CounterService_GetDialogCounterForUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +84,10 @@ func (c *counterServiceClient) NotifyMessage(ctx context.Context, in *NotifyMess
 // All implementations must embed UnimplementedCounterServiceServer
 // for forward compatibility
 type CounterServiceServer interface {
-	NotifyMessage(context.Context, *NotifyMessageRequest) (*emptypb.Empty, error)
+	CreateDialogCounters(context.Context, *CreateDialogCountersRequest) (*emptypb.Empty, error)
+	IncreaseDialogCounters(context.Context, *IncreaseDialogCountersRequest) (*emptypb.Empty, error)
+	FlushDialogCountersForUser(context.Context, *FlushDialogCountersForUserRequest) (*emptypb.Empty, error)
+	GetDialogCounterForUser(context.Context, *GetDialogCounterForUserRequest) (*GetDialogCounterForUserResponse, error)
 	mustEmbedUnimplementedCounterServiceServer()
 }
 
@@ -59,8 +95,17 @@ type CounterServiceServer interface {
 type UnimplementedCounterServiceServer struct {
 }
 
-func (UnimplementedCounterServiceServer) NotifyMessage(context.Context, *NotifyMessageRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NotifyMessage not implemented")
+func (UnimplementedCounterServiceServer) CreateDialogCounters(context.Context, *CreateDialogCountersRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDialogCounters not implemented")
+}
+func (UnimplementedCounterServiceServer) IncreaseDialogCounters(context.Context, *IncreaseDialogCountersRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IncreaseDialogCounters not implemented")
+}
+func (UnimplementedCounterServiceServer) FlushDialogCountersForUser(context.Context, *FlushDialogCountersForUserRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FlushDialogCountersForUser not implemented")
+}
+func (UnimplementedCounterServiceServer) GetDialogCounterForUser(context.Context, *GetDialogCounterForUserRequest) (*GetDialogCounterForUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDialogCounterForUser not implemented")
 }
 func (UnimplementedCounterServiceServer) mustEmbedUnimplementedCounterServiceServer() {}
 
@@ -75,20 +120,74 @@ func RegisterCounterServiceServer(s grpc.ServiceRegistrar, srv CounterServiceSer
 	s.RegisterService(&CounterService_ServiceDesc, srv)
 }
 
-func _CounterService_NotifyMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NotifyMessageRequest)
+func _CounterService_CreateDialogCounters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDialogCountersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CounterServiceServer).NotifyMessage(ctx, in)
+		return srv.(CounterServiceServer).CreateDialogCounters(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CounterService_NotifyMessage_FullMethodName,
+		FullMethod: CounterService_CreateDialogCounters_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CounterServiceServer).NotifyMessage(ctx, req.(*NotifyMessageRequest))
+		return srv.(CounterServiceServer).CreateDialogCounters(ctx, req.(*CreateDialogCountersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CounterService_IncreaseDialogCounters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IncreaseDialogCountersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CounterServiceServer).IncreaseDialogCounters(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CounterService_IncreaseDialogCounters_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CounterServiceServer).IncreaseDialogCounters(ctx, req.(*IncreaseDialogCountersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CounterService_FlushDialogCountersForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FlushDialogCountersForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CounterServiceServer).FlushDialogCountersForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CounterService_FlushDialogCountersForUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CounterServiceServer).FlushDialogCountersForUser(ctx, req.(*FlushDialogCountersForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CounterService_GetDialogCounterForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDialogCounterForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CounterServiceServer).GetDialogCounterForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CounterService_GetDialogCounterForUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CounterServiceServer).GetDialogCounterForUser(ctx, req.(*GetDialogCounterForUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -101,8 +200,20 @@ var CounterService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CounterServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "NotifyMessage",
-			Handler:    _CounterService_NotifyMessage_Handler,
+			MethodName: "CreateDialogCounters",
+			Handler:    _CounterService_CreateDialogCounters_Handler,
+		},
+		{
+			MethodName: "IncreaseDialogCounters",
+			Handler:    _CounterService_IncreaseDialogCounters_Handler,
+		},
+		{
+			MethodName: "FlushDialogCountersForUser",
+			Handler:    _CounterService_FlushDialogCountersForUser_Handler,
+		},
+		{
+			MethodName: "GetDialogCounterForUser",
+			Handler:    _CounterService_GetDialogCounterForUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
