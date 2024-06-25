@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: "counter-service"
+    build:
+      context: .
+    command: "/usr/local/bin/counter-service --config=/usr/src/app/cmd/counter-service/local_config.yaml"
+    restart: always
+    ports:
+      - "8060:8060"
+      - "8061:8061"
+      - "7040:7040"
+    volumes:
+      - .:/usr/src/app
+    networks:
+      - counter_net
+#      - social-network_social_network_net
+    external_links:
+      - backend:backend
+  redis:
+    build:
+      context: infra/redis
+      dockerfile: Dockerfile
+    container_name: redis
+    image: redis:7.2.5
+    ##    for debugging
+    ports:
+      - "6389:6389"
+    volumes:
+      - redis-data:/data
+    networks:
+      - counter_net
+
+volumes:
+  redis-data:
+
+networks:
+  counter_net:
+    driver: bridge
+#  social-network_social_network_net:
+#    external: true

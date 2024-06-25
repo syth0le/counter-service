@@ -14,7 +14,7 @@ func (a *App) newInternalGRPCServer(env *env) *xservers.GRPCServer {
 		xservers.GRPCWithServerName("internal grpc api"),
 	)
 
-	inpb.RegisterCounterServiceServer(server.Server, &internalapi.NotifierHandler{NotifierService: env.notifier})
+	inpb.RegisterCounterServiceServer(server.Server, &internalapi.CounterHandler{Service: env.counterService})
 
 	return server
 }

@@ -1,0 +1,32 @@
+logger:
+  level: "debug"
+  encoding: "console"
+  path: "stdout"
+
+public_server:
+  enable: true
+  endpoint: "localhost"
+  port: 8060
+
+admin_server:
+  enable: true
+  endpoint: "localhost"
+  port: 8061
+
+internal_grpc_server:
+  port: 7040
+  enable_reflection: true
+  enable_recover: true
+
+application:
+  app: "counter-service"
+
+storage:
+  enable: true
+  address: "redis-storage:6389"
+  password: "password"
+
+auth:
+  enable: true
+  conn:
+    endpoint: social-network:7070
