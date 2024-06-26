@@ -20,6 +20,7 @@ const (
 type Client interface {
 	HSet(ctx context.Context, hasTTL bool, key string, values ...any) error
 	HGet(ctx context.Context, key string, field string, scanTo encoding.BinaryUnmarshaler) error
+	HGetAll(ctx context.Context, key string) (map[string]string, error)
 	HIncr(ctx context.Context, key, field string) error
 	Delete(ctx context.Context, keys ...string) error
 	Close() error
@@ -83,6 +84,19 @@ func (c *ClientImpl) HGet(ctx context.Context, key string, field string, scanTo 
 	}
 
 	return nil
+}
+
+func (c *ClientImpl) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	resp, err := c.Client.HGetAll(ctx, key).Result()
+	if err != nil {
+		if err != redis.Nil {
+			return nil, xerrors.WrapInternalError(fmt.Errorf("hget error"))
+		}
+
+		return nil, xerrors.WrapNotFoundError(err, "not found in cache")
+	}
+
+	return resp, nil
 }
 
 func (c *ClientImpl) HIncr(ctx context.Context, key, field string) error {

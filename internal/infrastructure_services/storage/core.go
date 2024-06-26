@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	xerrors "github.com/syth0le/gopnik/errors"
 	"go.uber.org/zap"
@@ -28,8 +30,8 @@ type Service interface {
 	CreateDialogCounters(ctx context.Context, dialogID model.DialogID, participants []model.UserID) error
 	IncreaseDialogCounters(ctx context.Context, dialogID model.DialogID, FollowersIDs []model.UserID) error
 	FlushDialogCountersForUser(ctx context.Context, dialogID model.DialogID, userID model.UserID) error
-	GetDialogCounterForUser(ctx context.Context, dialogID model.DialogID, userID model.UserID) (*model.CounterValue, error)
-	GetUserCounters(ctx context.Context, dialogID model.DialogID, userID model.UserID) (*model.CounterValue, error)
+	GetDialogCounterForUser(ctx context.Context, dialogID model.DialogID, userID model.UserID) (*model.Counter, error)
+	GetUserCounters(ctx context.Context, userID model.UserID) ([]*model.Counter, error)
 }
 
 type ServiceImpl struct {
@@ -37,71 +39,77 @@ type ServiceImpl struct {
 	Logger *zap.Logger
 }
 
+//           userID
+//       /     |     \
+//   dialog1  dialog2  dialog3
+//     43        3        0
+//
+
 func (s *ServiceImpl) CreateDialogCounters(ctx context.Context, dialogID model.DialogID, participants []model.UserID) error {
-	keyHash, err := makeHash(DialogHashType, dialogID.String())
+	// todo: make tx for operation
+	dialogkeyHash, err := makeHash(DialogHashType, dialogID.String())
 	if err != nil {
 		return fmt.Errorf("make hash: %w", err)
 	}
 
-	values := make(map[string]int, len(participants))
 	for _, val := range participants {
-		valKeyHash, err := makeHash(UserHashType, val.String())
+		userKeyHash, err := makeHash(UserHashType, val.String())
 		if err != nil {
 			return fmt.Errorf("make hash: %w", err)
 		}
 
-		values[valKeyHash] = 0
-	}
+		err = s.Client.HSet(
+			ctx,
+			true,
+			userKeyHash,
+			dialogkeyHash,
+			0,
+		)
+		if err != nil {
+			return fmt.Errorf("cache set: %w", err)
+		}
 
-	err = s.Client.HSet(
-		ctx,
-		true,
-		keyHash,
-		values,
-	)
-	if err != nil {
-		return fmt.Errorf("cache set: %w", err)
+		s.Logger.Sugar().Debugf("key %s saved in cache", userKeyHash)
 	}
-
-	s.Logger.Sugar().Infof("key %s saved in cache", keyHash)
 
 	return nil
 }
 
 func (s *ServiceImpl) IncreaseDialogCounters(ctx context.Context, dialogID model.DialogID, FollowersIDs []model.UserID) error {
-	keyHash, err := makeHash(DialogHashType, dialogID.String())
+	dialogKeyHash, err := makeHash(DialogHashType, dialogID.String())
 	if err != nil {
 		return fmt.Errorf("make hash: %w", err)
 	}
 
 	for _, val := range FollowersIDs {
-		valKeyHash, err := makeHash(UserHashType, val.String())
+		userKeyHash, err := makeHash(UserHashType, val.String())
 		if err != nil {
 			return fmt.Errorf("make hash: %w", err)
 		}
 
 		err = s.Client.HIncr(
 			ctx,
-			keyHash,
-			valKeyHash,
+			userKeyHash,
+			dialogKeyHash,
 		)
 		if err != nil {
 			return fmt.Errorf("cache hincr: %w", err)
 		}
+
 	}
 
-	s.Logger.Sugar().Debugf("for key %s all fields values incremented in cache", keyHash)
+	s.Logger.Sugar().Debugf("for dialog %s all fields values incremented in cache", dialogKeyHash)
 
 	return nil
 }
 
 func (s *ServiceImpl) FlushDialogCountersForUser(ctx context.Context, dialogID model.DialogID, userID model.UserID) error {
-	keyHash, err := makeHash(DialogHashType, dialogID.String())
+	dialogKeyHash, err := makeHash(DialogHashType, dialogID.String())
 	if err != nil {
 		return fmt.Errorf("make hash: %w", err)
 	}
 
-	valKeyHash, err := makeHash(UserHashType, userID.String())
+	userKeyHash, err := makeHash(UserHashType, userID.String())
 	if err != nil {
 		return fmt.Errorf("make hash: %w", err)
 	}
@@ -109,26 +117,26 @@ func (s *ServiceImpl) FlushDialogCountersForUser(ctx context.Context, dialogID m
 	err = s.Client.HSet(
 		ctx,
 		true,
-		keyHash,
-		valKeyHash,
+		userKeyHash,
+		dialogKeyHash,
 		0,
 	)
 	if err != nil {
 		return fmt.Errorf("cache set: %w", err)
 	}
 
-	s.Logger.Sugar().Infof("key %s saved in cache", keyHash)
+	s.Logger.Sugar().Debugf("key %s %s flushed in cache", userKeyHash, dialogKeyHash)
 
 	return nil
 }
 
-func (s *ServiceImpl) GetDialogCounterForUser(ctx context.Context, dialogID model.DialogID, userID model.UserID) (*model.CounterValue, error) {
-	keyHash, err := makeHash(DialogHashType, dialogID.String())
+func (s *ServiceImpl) GetDialogCounterForUser(ctx context.Context, dialogID model.DialogID, userID model.UserID) (*model.Counter, error) {
+	dialogKeyHash, err := makeHash(DialogHashType, dialogID.String())
 	if err != nil {
 		return nil, fmt.Errorf("make hash: %w", err)
 	}
 
-	valKeyHash, err := makeHash(UserHashType, userID.String())
+	userKeyHash, err := makeHash(UserHashType, userID.String())
 	if err != nil {
 		return nil, fmt.Errorf("make hash: %w", err)
 	}
@@ -136,46 +144,40 @@ func (s *ServiceImpl) GetDialogCounterForUser(ctx context.Context, dialogID mode
 	var res *model.CounterValue
 	err = s.Client.HGet(
 		ctx,
-		keyHash,
-		valKeyHash,
+		userKeyHash,
+		dialogKeyHash,
 		res,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cache set: %w", err)
 	}
 
-	s.Logger.Sugar().Infof("key %s saved in cache", keyHash)
-
-	return res, nil
+	return &model.Counter{DialogID: dialogID, Value: *res}, nil
 }
 
-func (s *ServiceImpl) GetUserCounters(ctx context.Context, dialogID model.DialogID, userID model.UserID) (*model.CounterValue, error) {
-	// TODO: ???
-	return nil, fmt.Errorf("not implemented")
-	// keyHash, err := makeHash(DialogHashType, dialogID.String())
-	// if err != nil {
-	// 	return nil, fmt.Errorf("make hash: %w", err)
-	// }
-	//
-	// valKeyHash, err := makeHash(UserHashType, userID.String())
-	// if err != nil {
-	// 	return nil, fmt.Errorf("make hash: %w", err)
-	// }
-	//
-	// var res *model.CounterValue
-	// err = s.Client.HGet(
-	// 	ctx,
-	// 	keyHash,
-	// 	valKeyHash,
-	// 	res,
-	// )
-	// if err != nil {
-	// 	return nil, fmt.Errorf("cache set: %w", err)
-	// }
-	//
-	// s.Logger.Sugar().Infof("key %s saved in cache", keyHash)
-	//
-	// return res, nil
+func (s *ServiceImpl) GetUserCounters(ctx context.Context, userID model.UserID) ([]*model.Counter, error) {
+	userKeyHash, err := makeHash(UserHashType, userID.String())
+	if err != nil {
+		return nil, fmt.Errorf("make hash: %w", err)
+	}
+
+	dialogCounters, err := s.Client.HGetAll(ctx, userKeyHash)
+	if err != nil {
+		return nil, fmt.Errorf("cache set: %w", err)
+	}
+
+	counters := make([]*model.Counter, len(dialogCounters))
+	idx := 0
+	for key, val := range dialogCounters {
+		counterInt, err := strconv.Atoi(val)
+		if err != nil {
+			return nil, xerrors.WrapInternalError(fmt.Errorf("cannot get counters from storage: %w", err))
+		}
+
+		counters[idx] = &model.Counter{DialogID: parseHash[model.DialogID](key), Value: model.CounterValue(counterInt)}
+	}
+
+	return counters, nil
 }
 
 func makeHash(hashType HashType, key string) (string, error) {
@@ -190,4 +192,8 @@ func makeHash(hashType HashType, key string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s-%s", hashType, key), nil
+}
+
+func parseHash[T model.DialogID | model.UserID](hash string) T {
+	return T(strings.Split(hash, "-")[0])
 }

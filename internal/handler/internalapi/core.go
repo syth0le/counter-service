@@ -73,5 +73,5 @@ func (h *CounterHandler) GetDialogCounterForUser(ctx context.Context, request *i
 		return nil, fmt.Errorf("get dialog counter for user: %w", err)
 	}
 
-	return &inpb.GetDialogCounterForUserResponse{Counter: counterModel.Value}, nil
+	return &inpb.GetDialogCounterForUserResponse{Counter: int64(counterModel.Value)}, nil
 }

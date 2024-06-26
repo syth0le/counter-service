@@ -13,6 +13,9 @@ services:
       - "7040:7040"
     volumes:
       - .:/usr/src/app
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - counter_net
 #      - social-network_social_network_net
@@ -24,13 +27,18 @@ services:
       dockerfile: Dockerfile
     container_name: redis
     image: redis:7.2.5
-    ##    for debugging
     ports:
       - "6389:6389"
     volumes:
       - redis-data:/data
     networks:
       - counter_net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   redis-data:

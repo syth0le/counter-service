@@ -82,7 +82,7 @@ type counterListResponse struct {
 func counterModelToResponse(counter *model.Counter) *counterResponse {
 	return &counterResponse{
 		DialogID: counter.DialogID.String(),
-		Counter:  counter.Value,
+		Counter:  int64(counter.Value),
 	}
 }
 

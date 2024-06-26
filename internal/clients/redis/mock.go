@@ -23,6 +23,11 @@ func (c *ClientMock) HGet(ctx context.Context, key string, field string, scanTo 
 	return xerrors.WrapNotFoundError(fmt.Errorf("cannot find smth in cache mock"), "not found in cache")
 }
 
+func (c *ClientMock) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	c.Logger.Debug("hget through cache mock")
+	return nil, xerrors.WrapNotFoundError(fmt.Errorf("cannot find smth in cache mock"), "not found in cache")
+}
+
 func (c *ClientMock) HIncr(ctx context.Context, key, field string) error {
 	c.Logger.Debug("hincr through cache mock")
 	return nil

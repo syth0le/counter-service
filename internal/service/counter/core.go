@@ -68,7 +68,7 @@ type FlushDialogCountersForUserParams struct {
 func (s *ServiceImpl) FlushDialogCountersForUser(ctx context.Context, params *FlushDialogCountersForUserParams) error {
 	err := s.storageService.FlushDialogCountersForUser(ctx, params.DialogID, params.UserID)
 	if err != nil {
-		return fmt.Errorf("create dialog counters: %w", err)
+		return fmt.Errorf("flush dialog counters for user: %w", err)
 	}
 
 	return nil
@@ -82,13 +82,10 @@ type GetDialogCounterForUserParams struct {
 func (s *ServiceImpl) GetDialogCounterForUser(ctx context.Context, params *GetDialogCounterForUserParams) (*model.Counter, error) {
 	counter, err := s.storageService.GetDialogCounterForUser(ctx, params.DialogID, params.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("create dialog counters: %w", err)
+		return nil, fmt.Errorf("get dialog counter for user: %w", err)
 	}
 
-	return &model.Counter{
-		DialogID: params.DialogID,
-		Value:    int64(*counter),
-	}, nil
+	return counter, nil
 }
 
 type GetUserCountersParams struct {
@@ -96,11 +93,10 @@ type GetUserCountersParams struct {
 }
 
 func (s *ServiceImpl) GetUserCounters(ctx context.Context, params *GetUserCountersParams) ([]*model.Counter, error) {
-	counters, err := s.storageService.GetUserCounters(ctx, model.DialogID(""), params.UserID)
+	counters, err := s.storageService.GetUserCounters(ctx, params.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("create dialog counters: %w", err)
+		return nil, fmt.Errorf("get user counters: %w", err)
 	}
-	_ = counters
 
-	return nil, nil
+	return counters, nil
 }

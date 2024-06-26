@@ -18,7 +18,7 @@ func (d DialogID) String() string {
 
 type Counter struct {
 	DialogID DialogID
-	Value    int64
+	Value    CounterValue
 }
 
 type CounterValue int
