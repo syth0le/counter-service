@@ -27,7 +27,7 @@ func (a *App) publicMux(env *env) *chi.Mux {
 		r.Use(env.authClient.AuthenticationInterceptor)
 
 		r.Get("/", handler.GetUserCountersList)
-		r.Post("/{dialogID}", handler.GetUserCounter)
+		r.Get("/{dialogID}", handler.GetUserCounter)
 	})
 
 	return mux

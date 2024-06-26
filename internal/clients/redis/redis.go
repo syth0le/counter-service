@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding"
 	"fmt"
 	"time"
 
@@ -10,7 +9,7 @@ import (
 	xerrors "github.com/syth0le/gopnik/errors"
 	"go.uber.org/zap"
 
-	"github.com/syth0le/counter-service/cmd/counter-service/configuration"
+	"github.com/syth0le/counter-service/cmd/counter/configuration"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 
 type Client interface {
 	HSet(ctx context.Context, hasTTL bool, key string, values ...any) error
-	HGet(ctx context.Context, key string, field string, scanTo encoding.BinaryUnmarshaler) error
+	HGet(ctx context.Context, key string, field string) (string, error)
 	HGetAll(ctx context.Context, key string) (map[string]string, error)
 	HIncr(ctx context.Context, key, field string) error
 	Delete(ctx context.Context, keys ...string) error
@@ -68,22 +67,17 @@ func (c *ClientImpl) HSet(ctx context.Context, hasTTL bool, key string, values .
 	return nil
 }
 
-func (c *ClientImpl) HGet(ctx context.Context, key string, field string, scanTo encoding.BinaryUnmarshaler) error {
+func (c *ClientImpl) HGet(ctx context.Context, key string, field string) (string, error) {
 	resp, err := c.Client.HGet(ctx, key, field).Result()
 	if err != nil {
 		if err != redis.Nil {
-			return xerrors.WrapInternalError(fmt.Errorf("hget error"))
+			return "", xerrors.WrapInternalError(fmt.Errorf("hget error"))
 		}
 
-		return xerrors.WrapNotFoundError(err, "not found in cache")
+		return "", xerrors.WrapNotFoundError(err, "not found in cache")
 	}
 
-	err = scanTo.UnmarshalBinary([]byte(resp))
-	if err != nil {
-		return fmt.Errorf("unmarshal error: %w", err)
-	}
-
-	return nil
+	return resp, nil
 }
 
 func (c *ClientImpl) HGetAll(ctx context.Context, key string) (map[string]string, error) {

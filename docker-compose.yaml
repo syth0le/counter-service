@@ -5,7 +5,7 @@ services:
     container_name: "counter-service"
     build:
       context: .
-    command: "/usr/local/bin/counter-service --config=/usr/src/app/cmd/counter-service/local_config.yaml"
+    command: "/usr/local/bin/counter-service --config=/usr/src/app/cmd/counter/local_config.yaml"
     restart: always
     ports:
       - "8060:8060"
@@ -13,9 +13,9 @@ services:
       - "7040:7040"
     volumes:
       - .:/usr/src/app
-    depends_on:
-      redis:
-        condition: service_healthy
+#    depends_on:
+#      redis:
+#        condition: service_healthy
     networks:
       - counter_net
 #      - social-network_social_network_net
@@ -28,7 +28,7 @@ services:
     container_name: redis
     image: redis:7.2.5
     ports:
-      - "6389:6389"
+      - "6389:6379"
     volumes:
       - redis-data:/data
     networks:

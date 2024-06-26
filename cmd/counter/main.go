@@ -1,4 +1,4 @@
-package counter_service
+package main
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/spf13/pflag"
 
-	"github.com/syth0le/counter-service/cmd/counter-service/application"
-	"github.com/syth0le/counter-service/cmd/counter-service/configuration"
+	"github.com/syth0le/counter-service/cmd/counter/application"
+	"github.com/syth0le/counter-service/cmd/counter/configuration"
 )
 
 func main() {

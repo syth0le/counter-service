@@ -9,7 +9,7 @@ import (
 	xcloser "github.com/syth0le/gopnik/closer"
 	"go.uber.org/zap"
 
-	"github.com/syth0le/counter-service/cmd/counter-service/configuration"
+	"github.com/syth0le/counter-service/cmd/counter/configuration"
 	"github.com/syth0le/counter-service/internal/clients/auth"
 	"github.com/syth0le/counter-service/internal/clients/redis"
 	"github.com/syth0le/counter-service/internal/infrastructure_services/storage"
@@ -46,10 +46,10 @@ func (a *App) Run() error {
 	a.Closer.AddForce(internalGrpcServer.ForcefullyStop)
 	a.Closer.Add(internalGrpcServer.GracefullyStop)
 
-	// httpServer := a.newHTTPServer(envStruct)
-	// a.Closer.Add(httpServer.GracefulStop()...)
-	//
-	// a.Closer.Run(httpServer.Run()...)
+	httpServer := a.newHTTPServer(envStruct)
+	a.Closer.Add(httpServer.GracefulStop()...)
+
+	a.Closer.Run(httpServer.Run()...)
 	a.Closer.Run(internalGrpcServer.Run)
 	a.Closer.Wait()
 	return nil

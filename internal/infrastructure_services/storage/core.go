@@ -141,18 +141,17 @@ func (s *ServiceImpl) GetDialogCounterForUser(ctx context.Context, dialogID mode
 		return nil, fmt.Errorf("make hash: %w", err)
 	}
 
-	var res *model.CounterValue
-	err = s.Client.HGet(
-		ctx,
-		userKeyHash,
-		dialogKeyHash,
-		res,
-	)
+	res, err := s.Client.HGet(ctx, userKeyHash, dialogKeyHash)
 	if err != nil {
-		return nil, fmt.Errorf("cache set: %w", err)
+		return nil, fmt.Errorf("hget: %w", err)
 	}
 
-	return &model.Counter{DialogID: dialogID, Value: *res}, nil
+	val, err := strconv.Atoi(res)
+	if err != nil {
+		return nil, xerrors.WrapInternalError(fmt.Errorf("cannot get counters from storage: %w", err))
+	}
+
+	return &model.Counter{DialogID: dialogID, Value: model.CounterValue(val)}, nil
 }
 
 func (s *ServiceImpl) GetUserCounters(ctx context.Context, userID model.UserID) ([]*model.Counter, error) {
@@ -195,5 +194,5 @@ func makeHash(hashType HashType, key string) (string, error) {
 }
 
 func parseHash[T model.DialogID | model.UserID](hash string) T {
-	return T(strings.Split(hash, "-")[0])
+	return T(strings.Split(hash, "-")[1])
 }

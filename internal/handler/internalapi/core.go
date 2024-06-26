@@ -3,7 +3,11 @@ package internalapi
 import (
 	"context"
 	"fmt"
+	"net/http"
 
+	xerrors "github.com/syth0le/gopnik/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/syth0le/counter-service/internal/model"
@@ -18,6 +22,7 @@ type CounterHandler struct {
 }
 
 func (h *CounterHandler) CreateDialogCounters(ctx context.Context, request *inpb.CreateDialogCountersRequest) (*emptypb.Empty, error) {
+	// todo: check if counters exist - not create them (not rewrite)
 	participants := make([]model.UserID, len(request.Participants))
 	for idx, val := range request.Participants {
 		participants[idx] = model.UserID(val)
@@ -28,7 +33,7 @@ func (h *CounterHandler) CreateDialogCounters(ctx context.Context, request *inpb
 		Participants: participants,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("create dialog counters: %w", err)
+		return nil, GRPCError(fmt.Errorf("create dialog counters: %w", err))
 	}
 
 	return &emptypb.Empty{}, nil
@@ -46,7 +51,7 @@ func (h *CounterHandler) IncreaseDialogCounters(ctx context.Context, request *in
 		FollowersIDs: followersIDs,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("increase dialog counters: %w", err)
+		return nil, GRPCError(fmt.Errorf("increase dialog counters: %w", err))
 	}
 
 	return &emptypb.Empty{}, nil
@@ -58,7 +63,7 @@ func (h *CounterHandler) FlushDialogCountersForUser(ctx context.Context, request
 		UserID:   model.UserID(request.UserId),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("flush dialog counters for user: %w", err)
+		return nil, GRPCError(fmt.Errorf("flush dialog counters for user: %w", err))
 	}
 
 	return &emptypb.Empty{}, nil
@@ -70,8 +75,26 @@ func (h *CounterHandler) GetDialogCounterForUser(ctx context.Context, request *i
 		UserID:   model.UserID(request.UserId),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("get dialog counter for user: %w", err)
+		return nil, GRPCError(fmt.Errorf("get dialog counter for user: %w", err))
 	}
 
 	return &inpb.GetDialogCounterForUserResponse{Counter: int64(counterModel.Value)}, nil
+}
+
+func GRPCError(err error) error {
+	resError, ok := xerrors.FromError(err)
+	if !ok {
+		return err
+	}
+
+	switch resError.StatusCode {
+	case http.StatusForbidden:
+		return status.Error(codes.PermissionDenied, resError.Msg)
+	case http.StatusNotFound:
+		return status.Error(codes.NotFound, resError.Msg)
+	case http.StatusBadRequest:
+		return status.Error(codes.InvalidArgument, resError.Msg)
+	default:
+		return status.Errorf(codes.Internal, resError.Msg)
+	}
 }

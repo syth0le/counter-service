@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"encoding"
 	"fmt"
 
 	xerrors "github.com/syth0le/gopnik/errors"
@@ -18,9 +17,9 @@ func (c *ClientMock) HSet(ctx context.Context, hasTTL bool, key string, values .
 	return nil
 }
 
-func (c *ClientMock) HGet(ctx context.Context, key string, field string, scanTo encoding.BinaryUnmarshaler) error {
+func (c *ClientMock) HGet(ctx context.Context, key string, field string) (string, error) {
 	c.Logger.Debug("hget through cache mock")
-	return xerrors.WrapNotFoundError(fmt.Errorf("cannot find smth in cache mock"), "not found in cache")
+	return "", xerrors.WrapNotFoundError(fmt.Errorf("cannot find smth in cache mock"), "not found in cache")
 }
 
 func (c *ClientMock) HGetAll(ctx context.Context, key string) (map[string]string, error) {

@@ -23,10 +23,10 @@ application:
 
 storage:
   enable: true
-  address: "redis-storage:6389"
+  address: "redis:6379"
   password: "password"
 
 auth:
-  enable: true
+  enable: false
   conn:
     endpoint: social-network:7070
