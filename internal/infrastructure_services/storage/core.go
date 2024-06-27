@@ -174,6 +174,7 @@ func (s *ServiceImpl) GetUserCounters(ctx context.Context, userID model.UserID) 
 		}
 
 		counters[idx] = &model.Counter{DialogID: parseHash[model.DialogID](key), Value: model.CounterValue(counterInt)}
+		idx += 1
 	}
 
 	return counters, nil

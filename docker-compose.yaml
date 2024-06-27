@@ -13,12 +13,12 @@ services:
       - "7040:7040"
     volumes:
       - .:/usr/src/app
-#    depends_on:
-#      redis:
-#        condition: service_healthy
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - counter_net
-#      - social-network_social_network_net
+      - social-network_social_network_net
     external_links:
       - backend:backend
   redis:
@@ -46,5 +46,5 @@ volumes:
 networks:
   counter_net:
     driver: bridge
-#  social-network_social_network_net:
-#    external: true
+  social-network_social_network_net:
+    external: true

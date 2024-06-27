@@ -27,6 +27,6 @@ storage:
   password: "password"
 
 auth:
-  enable: false
+  enable: true
   conn:
     endpoint: social-network:7070
